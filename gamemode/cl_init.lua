@@ -31,6 +31,30 @@ end
 end
 concommand.Add( "team_menu", set_team )]]
 
+-- Round state comm
+
+function GM:Initialize()
+   GAMEMODE.round_state = ROUND_WAIT
+end
+
+function GetRoundState() return GAMEMODE.round_state end
+
+local function RoundStateChange(o, n)
+	
+end
+
+local function ReceiveRoundState()
+   local o = GetRoundState()
+   GAMEMODE.round_state = net.ReadUInt(3)
+
+   if o != GAMEMODE.round_state then
+      RoundStateChange(o, GAMEMODE.round_state)
+   end
+   
+end
+
+net.Receive("zb_RoundState", ReceiveRoundState)
+
 function GM:PostDrawViewModel( vm, ply, weapon )
 
 	if ( weapon.UseHands || !weapon:IsScripted() ) then

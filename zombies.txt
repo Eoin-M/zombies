@@ -24,7 +24,7 @@
 		3
 		{
 			"name"		"zb_preptime_seconds"
-			"text"		"Preparing Time"
+			"text"		"Preparing Time (Seconds)"
 			"type"		"Numeric"
 			"default"	"10"
 		}
@@ -32,7 +32,7 @@
 		4
 		{
 			"name"		"zb_posttime_seconds"
-			"text"		"Postround Time"
+			"text"		"Postround Time (Seconds)"
 			"type"		"Numeric"
 			"default"	"10"
 		}
@@ -48,7 +48,7 @@
 		6
 		{
 			"name"		"zb_roundtime_minutes"
-			"text"		"Round Time"
+			"text"		"Round Time (Minutes)"
 			"type"		"Numeric"
 			"default"	"5"
 		}
@@ -56,7 +56,7 @@
 		7
 		{
 			"name"		"zb_zombies_pct"
-			"text"		"Initial Zombies Ratio"
+			"text"		"Initial Zombies (%)"
 			"type"		"Numeric"
 			"default"	"0.25"
 		}

@@ -1,12 +1,17 @@
 AddCSLuaFile( "shared.lua" ) --Tell the server that the client needs to download shared.lua
 AddCSLuaFile( "cl_init.lua" ) --Tell the server that the client needs to download cl_init.lua
 AddCSLuaFile("cl_hud.lua")
+AddCSLuaFile("util.lua")
  
 include( 'shared.lua' ) --Tell the server to load shared.lua
 
 CreateConVar("zb_preptime_seconds", "10")
-CreateConVar("zb_roundtime_minutes", "6")
+CreateConVar("zb_roundtime_minutes", "5")
+CreateConVar("zb_posttime_seconds", "10")
 CreateConVar("zb_zombies_pct", "0.25")
+
+-- Pool some network names.
+util.AddNetworkString("zb_RoundState")
 
 function GM:Initialize()
 	print("GM:Initialize")
@@ -21,10 +26,17 @@ end
 -- eg. a networked var if this proves more convenient
 function SetRoundState(state)
    GAMEMODE.round_state = state
+   SendRoundState(state)
 end
 
 function GetRoundState()
    return GAMEMODE.round_state
+end
+
+function SendRoundState(state, ply)
+   net.Start("zb_RoundState")
+      net.WriteUInt(state, 3)
+   return ply and net.Send(ply) or net.Broadcast()
 end
 
 local function EnoughPlayers()
@@ -62,7 +74,7 @@ function PrepareRound()
 	print("Prepare Round")
 	--if GAMEMODE.FirstRound then
 		local ptime = GetConVar("zb_preptime_seconds"):GetInt()
-		GAMEMODE.FirstRound = false
+		--GAMEMODE.FirstRound = false
 	--end
 	print("Prep Time: " .. ptime)
 	SetRoundEnd(CurTime() + ptime)
@@ -82,7 +94,34 @@ function BeginRound()
 	SetRoundEnd(CurTime() + endtime)
 	
 	ChooseZombies()
+	timer.Create("begin2begin", endtime, 1, PostRound)
 	SetRoundState(ROUND_ACTIVE)
+end
+
+function PostRound()
+	print("Post Round")
+	timer.Stop("begin2begin")
+	local ptime = GetConVar("zb_posttime_seconds"):GetInt()
+	print("Post Time: " .. ptime)
+	
+	SetRoundEnd(CurTime() + ptime)
+	timer.Create("post2begin", ptime, 1, ResetRound)
+	SetRoundState(ROUND_POST)
+end
+
+function ResetRound()
+	local players = player.GetAll()
+	
+	for k,ply in pairs(players) do
+		ply:SetTeam( 0 )
+		ply:KillSilent()
+	end
+	
+	PrepareRound()
+end
+
+function SetRoundEnd(endtime)
+   SetGlobalFloat("zb_round_end", endtime)
 end
 
 function ChooseZombies()
@@ -110,14 +149,14 @@ function ChooseZombies()
 		end
 	end
 end
-
-function SetRoundEnd(endtime)
-   SetGlobalFloat("zb_round_end", endtime)
-end
 	
 function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server and spawns" function
  
-    ply:SetTeam( 0 ) --Add the player to team 0
+    if(GetRoundState() == ROUND_PREP) then
+		ply:SetTeam( 0 ) --Add the player to team 0
+	else
+		ply:SetTeam( 1 )
+	end
 	ply:SetWalkSpeed( 165 )
 	ply:SetRunSpeed( 220 )
  
@@ -137,7 +176,7 @@ local survivorMDL = {
 	"magnusson" }
 
 for k,v in pairs(survivorMDL) do				
-	util.PrecacheModel(survivorMDL[k])
+	util.PrecacheModel(v)
 end
 
 local zombieMDL = {	
@@ -148,7 +187,7 @@ local zombieMDL = {
 	"zombie_soldier" }
 
 for k,v in pairs(zombieMDL) do				
-	util.PrecacheModel(zombieMDL[k])
+	util.PrecacheModel(v)
 end
 
 function GM:PlayerSpawn( ply )
@@ -242,17 +281,10 @@ function GM:PlayerDeath( victim, inflictor, attacker )
 		victim:SetTeam( 2 )
 	end
 	
+	print("Survivors Remaining: " .. team.NumPlayers(1))
 	if (team.NumPlayers(1) == 0) then
-		--reset()
-	end
-end
-
-function reset()
-	local players = player.GetAll()
-	
-	for key,value in pairs(players) do
-		players[key]:SetTeam( 1 )
-		players[key]:KillSilent()
+		print("Round Over")
+		PostRound()
 	end
 end
 

@@ -1,3 +1,14 @@
+local table = table
+local surface = surface
+local draw = draw
+local math = math
+local string = string
+
+-- Fonts
+surface.CreateFont("ZbState", {font = "Trebuchet24",
+                                    size = 26,
+                                    weight = 1000})
+
 -- Color presets
 local bg_colors = {
    background_main = Color(0, 0, 10, 200),
@@ -57,7 +68,7 @@ local function PaintBar(x, y, w, h, colors, value)
    local width = w * math.Clamp(value, 0, 1)
 
    if width > 0 then
-      RoundedMeter(8, x, y, width, h, colors.fill)
+      --RoundedMeter(8, x, y, width, h, colors.fill)
    end
 end
 
@@ -85,10 +96,10 @@ local function DrawBg(x, y, width, height, client)
    local col = bg_colors.innocent
    if GAMEMODE.round_state != ROUND_ACTIVE then
       col = bg_colors.noround
-   elseif client:GetTraitor() then
+   elseif client:Team() == 1 then
+      col = bg_colors.innocent
+   elseif client:Team() == 2 then
       col = bg_colors.traitor
-   elseif client:GetDetective() then
-      col = bg_colors.detective
    end
 
    draw.RoundedBox(8, x, y, tw, th, col)
@@ -105,36 +116,6 @@ local function ShadowedText(text, font, x, y, color, xalign, yalign)
 end
 
 local margin = 10
-
--- Paint punch-o-meter
-local function PunchPaint(client)
-   local L = GetLang()
-   local punch = client:GetNWFloat("specpunches", 0)
-
-   local width, height = 200, 25
-   local x = ScrW() / 2 - width/2
-   local y = margin/2 + height
-
-   PaintBar(x, y, width, height, ammo_colors, punch)
-
-   local color = bg_colors.background_main
-
-   dr.SimpleText(L.punch_title, "HealthAmmo", ScrW() / 2, y, color, TEXT_ALIGN_CENTER)
-
-   dr.SimpleText(L.punch_help, "TabLarge", ScrW() / 2, margin, COLOR_WHITE, TEXT_ALIGN_CENTER)
-
-   local bonus = client:GetNWInt("bonuspunches", 0)
-   if bonus != 0 then
-      local text
-      if bonus < 0 then
-         text = interp(L.punch_bonus, {num = bonus})
-      else
-         text = interp(L.punch_malus, {num = bonus})
-      end
-
-      dr.SimpleText(text, "TabLarge", ScrW() / 2, y * 2, COLOR_WHITE, TEXT_ALIGN_CENTER)
-   end
-end
 
 --local key_params = { usekey = Key("+use", "USE") }
 
@@ -157,7 +138,7 @@ local function SpecHUDPaint(client)
    draw.RoundedBox(8, x, round_y, time_x - x, height, bg_colors.noround)
 
    local text = L[ roundstate_string[GAMEMODE.round_state] ]
-   ShadowedText(text, "TraitorState", x + margin, round_y, COLOR_WHITE)
+   ShadowedText(text, "ZbState", x + margin, round_y, COLOR_WHITE)
 
    -- Draw round/prep/post time remaining
    local text = util.SimpleTime(math.max(0, GetGlobalFloat("zb_round_end", 0) - CurTime()), "%02i:%02i")
@@ -175,13 +156,16 @@ local function SpecHUDPaint(client)
 end
 
 local function InfoPaint(client)
-   local L = GetLang()
+   --local L = GetLang()
+   --print(GetRoundState())
+   if(GetRoundState() == ROUND_WAIT) then return end
 
    local width = 250
    local height = 90
 
    local x = margin
    local y = ScrH() - margin - height
+   local zb_y = y - 30
 
    DrawBg(x, y, width, height, client)
 
@@ -196,38 +180,27 @@ local function InfoPaint(client)
 
    ShadowedText(tostring(health), "HealthAmmo", bar_width, health_y, COLOR_WHITE, TEXT_ALIGN_RIGHT, TEXT_ALIGN_RIGHT)
 
-   -- Draw ammo
-   if client:GetActiveWeapon().Primary then
-      local ammo_clip, ammo_max, ammo_inv = GetAmmo(client)
-      if ammo_clip != -1 then
-         local ammo_y = health_y + bar_height + margin
-         PaintBar(x+margin, ammo_y, bar_width, bar_height, ammo_colors, ammo_clip/ammo_max)
-         local text = string.format("%i + %02i", ammo_clip, ammo_inv)
-
-         ShadowedText(text, "HealthAmmo", bar_width, ammo_y, COLOR_WHITE, TEXT_ALIGN_RIGHT, TEXT_ALIGN_RIGHT)
-      end
-   end
-
    -- Draw traitor state
-   local round_state = GAMEMODE.round_state
-
-   local zb_y = y - 30
-   local text = nil
-   if round_state == ROUND_ACTIVE then
-      text = L[ client:GetRoleStringRaw() ]
-   else
-      text = L[ roundstate_string[round_state] ]
-   end
-
-   ShadowedText(text, "TraitorState", x + margin + 73, zb_y, COLOR_WHITE, TEXT_ALIGN_CENTER)
+   --local round_state = GAMEMODE.round_state
 
    -- Draw round time
    --local is_haste = HasteMode() and round_state == ROUND_ACTIVE
    --local is_traitor = client:IsActiveTraitor()
-
+   local text
+   if(client:Team() == 1) then text = "Survivor"
+   else text = "Zombie" end
+		
+   ShadowedText(text, "ZbState", x + margin + 73, zb_y, COLOR_WHITE, TEXT_ALIGN_CENTER)
+   
+   if(GetRoundState() == ROUND_WAIT) then text = "Waiting For Players"
+   elseif(GetRoundState() == ROUND_PREP) then text = "Preparing Time"
+   elseif(GetRoundState() == ROUND_PREP) then text = "Goal: Survive"
+   else(GetRoundState() == ROUND_PREP) then text = "Round Over"
+   
+   ShadowedText(text, "ZbState", x + margin + 73, zb_y + 75, COLOR_WHITE, TEXT_ALIGN_CENTER)
+   
    local endtime = GetGlobalFloat("zb_round_end", 0) - CurTime()
 
-   local text
    local font = "TimeLeft"
    local color = COLOR_WHITE
    local rx = x + margin + 170
@@ -318,9 +291,9 @@ function GM:HUDPaint()
    end
 
    -- Draw bottom left info panel
-   if hook.Call( "HUDShouldDraw", GAMEMODE, "TTTInfoPanel" ) then
+   if hook.Call( "HUDShouldDraw", GAMEMODE, "TTTInfoPanel" ) then]]
        InfoPaint(client)
-   end]]
+   --end]]
 end
 
 -- Hide the standard HUD stuff
