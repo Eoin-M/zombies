@@ -1,0 +1,65 @@
+"zombies"
+ {
+	"base"		"base"
+ 	"title"		"Zombies"
+	"menusystem"	"1"
+	"maps" 		"^zb_"
+	"settings" {
+		1
+		{
+			"name"		"zb_time_limit_minutes"
+			"text"		"Map Time Limit"
+			"type"		"Numeric"
+			"default"	"75"
+		}
+		
+		2
+		{
+			"name"		"zb_firstpreptime"
+			"text"		"Initial Waiting Time"
+			"type"		"Numeric"
+			"default"	"60"
+		}
+		
+		3
+		{
+			"name"		"zb_preptime_seconds"
+			"text"		"Preparing Time"
+			"type"		"Numeric"
+			"default"	"10"
+		}
+		
+		4
+		{
+			"name"		"zb_posttime_seconds"
+			"text"		"Postround Time"
+			"type"		"Numeric"
+			"default"	"10"
+		}
+		
+		5
+		{
+			"name"		"zb_round_limit"
+			"text"		"Round Limit"
+			"type"		"Numeric"
+			"default"	"6"
+		}
+		
+		6
+		{
+			"name"		"zb_roundtime_minutes"
+			"text"		"Round Time"
+			"type"		"Numeric"
+			"default"	"5"
+		}
+		
+		7
+		{
+			"name"		"zb_zombies_pct"
+			"text"		"Initial Zombies Ratio"
+			"type"		"Numeric"
+			"default"	"0.25"
+		}
+		
+	}
+  }
