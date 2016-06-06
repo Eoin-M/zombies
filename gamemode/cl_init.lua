@@ -1,6 +1,13 @@
 include( 'shared.lua' ) --Tell the client to load shared.lua
 include("cl_hud.lua")
 
+local surface = surface
+
+-- Fonts
+surface.CreateFont("zbFrameFont", {font = "Trebuchet24",
+                                    size = 30,
+                                    weight = 1000})
+
 --[[function set_team()
  
 local frame = vgui.Create( "DFrame" )
@@ -39,8 +46,31 @@ end
 
 function GetRoundState() return GAMEMODE.round_state end
 
+local frame
 local function RoundStateChange(o, n)
-	
+	if(o == ROUND_ACTIVE and n == ROUND_POST) then
+		frame = vgui.Create( "DFrame" )
+		frame:SetSize( ScrW()/3, ScrH()/3 ) --Set the size
+		frame:Center() --Set the window in the middle of the players screen/game window
+		frame:SetTitle( "Round Over" ) --Set title
+		frame:SetVisible( true )
+		frame:SetDraggable( false )
+		frame:ShowCloseButton( true )
+		frame:MakePopup()
+		
+		winners = vgui.Create( "DLabel", frame )
+		winners:SetContentAlignment( 5 )
+		winners:SetSize( ScrW()/1.5, ScrH()/1.5 )
+		winners:Center()
+		winners:SetFont( "zbFrameFont" )
+		if (team.NumPlayers(1) == 0) then
+			winners:SetText( "Winners are the: Zombies")
+		else winners:SetText( "Winners are the: Survivors") end
+		
+	elseif(frame) then 
+		frame:Remove()
+	end
+	print(frame)
 end
 
 local function ReceiveRoundState()

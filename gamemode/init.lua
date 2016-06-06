@@ -13,6 +13,29 @@ CreateConVar("zb_zombies_pct", "0.25")
 -- Pool some network names.
 util.AddNetworkString("zb_RoundState")
 
+function CleanUp()
+   --local et = ents.TTT
+   -- if we are going to import entities, it's no use replacing HL2DM ones as
+   -- soon as they spawn, because they'll be removed anyway
+   --et.SetReplaceChecking(not et.CanImportEntities(game.GetMap()))
+
+   --et.FixParentedPreCleanup()
+
+   game.CleanUpMap()
+
+   --et.FixParentedPostCleanup()
+
+   -- Strip players now, so that their weapons are not seen by ReplaceEntities
+   for k,ply in pairs(player.GetAll()) do
+      if IsValid(ply) then
+         ply:StripWeapons()
+      end
+   end
+
+   -- a different kind of cleanup
+   --util.SafeRemoveHook("PlayerSay", "ULXMeCheck")
+end
+
 function GM:Initialize()
 	print("GM:Initialize")
 	GAMEMODE.round_state = ROUND_WAIT
@@ -72,6 +95,7 @@ end
 
 function PrepareRound()
 	print("Prepare Round")
+	CleanUp()
 	--if GAMEMODE.FirstRound then
 		local ptime = GetConVar("zb_preptime_seconds"):GetInt()
 		--GAMEMODE.FirstRound = false
@@ -81,6 +105,8 @@ function PrepareRound()
 	
 	for k,ply in pairs(player.GetAll()) do
 		ply:SetTeam(1)
+		ply:SetWalkSpeed( 165 )
+		ply:SetRunSpeed( 220 )
 		ply:Spawn()
 	end
 
@@ -157,8 +183,6 @@ function GM:PlayerInitialSpawn( ply ) --"When the player first joins the server 
 	else
 		ply:SetTeam( 1 )
 	end
-	ply:SetWalkSpeed( 165 )
-	ply:SetRunSpeed( 220 )
  
 end --End the "when player first joins server and spawns" function
 

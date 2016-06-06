@@ -193,11 +193,13 @@ local function InfoPaint(client)
    ShadowedText(text, "ZbState", x + margin + 73, zb_y, COLOR_WHITE, TEXT_ALIGN_CENTER)
    
    if(GetRoundState() == ROUND_WAIT) then text = "Waiting For Players"
-   elseif(GetRoundState() == ROUND_PREP) then text = "Preparing Time"
-   elseif(GetRoundState() == ROUND_PREP) then text = "Goal: Survive"
-   else(GetRoundState() == ROUND_PREP) then text = "Round Over"
+   elseif(GetRoundState() == ROUND_PREP) then text = "Prep Time"
+   elseif(GetRoundState() == ROUND_ACTIVE and client:Team() == 1) then text = "Goal: Survive"
+   elseif(GetRoundState() == ROUND_ACTIVE and client:Team() == 2) then text = "Goal: Kill"
+   elseif(GetRoundState() == ROUND_POST) then text = "Round Over" 
+   else text = "Bug Occurred" end
    
-   ShadowedText(text, "ZbState", x + margin + 73, zb_y + 75, COLOR_WHITE, TEXT_ALIGN_CENTER)
+   ShadowedText(text, "ZbState", x + margin + 73, zb_y + 75, COLOR_WHITE, TEXT_ALIGN_LEFT, TEXT_ALIGN_LEFT)
    
    local endtime = GetGlobalFloat("zb_round_end", 0) - CurTime()
 
